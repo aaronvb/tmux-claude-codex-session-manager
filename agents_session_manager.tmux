@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# tmux-claude-codex-session-manager
+# Agents session manager for Claude Code and Codex
 #
 # List, monitor status, and jump across nested Claude Code and Codex sessions
 # from a single popup. tpm runs this file as an executable on tmux startup; it
@@ -11,7 +11,7 @@ CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 launch_key="$(get_tmux_option @claude_launch_key 'y')"
 codex_launch_key="$(get_tmux_option @codex_launch_key 'o')"
-list_key="$(get_tmux_option @claude_list_key 'u')"
+picker_key="$(get_tmux_option_compat @agents_picker_key @claude_list_key 'u')"
 codex_enabled="$(get_tmux_option @codex_enabled 'auto')"
 
 # Launch (or re-attach to) a provider session for the current pane's directory.
@@ -30,5 +30,5 @@ fi
 
 # Open the unified picker. When pressed from inside a session popup, list.sh
 # closes that popup first so the picker opens full-size on the outer client.
-tmux bind-key "$list_key" \
+tmux bind-key "$picker_key" \
   run-shell "$CURRENT_DIR/scripts/list.sh '#{q:client_name}'"

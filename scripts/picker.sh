@@ -40,11 +40,13 @@ fi
 
 self="$DIR/picker.sh"
 export FZF_DEFAULT_OPTS=''
+export AGENTS_PICKER="$self"
+# Legacy alias retained for existing user-defined fzf reload bindings.
 export CLAUDE_PICKER="$self"
 
 # Arbitrary user fzf options (e.g. custom --bind or --preview-window)
 extra_opts=()
-fzf_options="$(get_tmux_option @claude_fzf_options '')"
+fzf_options="$(get_tmux_option_compat @agents_fzf_options @claude_fzf_options '')"
 [ -n "$fzf_options" ] && eval "extra_opts=($fzf_options)"
 
 # ctrl-x kills the agent process itself — the pid on the row is Claude's
@@ -62,7 +64,7 @@ sel=$("$DIR/agents.sh" | fzf --ansi --delimiter='\t' --with-nth=5,6,7,8,9 \
 pane=$(printf '%s' "$sel" | cut -f2)
 kind=$(printf '%s' "$sel" | cut -f4)
 
-parent=$(tmux show-options -gqv @claude_parent 2>/dev/null)
+parent=$(get_tmux_option_compat @agents_parent @claude_parent '')
 session=$(tmux display-message -p -t "$pane" '#{session_name}' 2>/dev/null)
 
 if [ "$kind" = loose ]; then
@@ -82,7 +84,9 @@ fi
 # focus the chosen agent's own window inside that session, then resume it in THIS
 # popup over the top. Falls back to resuming over the current window when
 # origin/parent are unknown.
-origin=$(tmux show-options -qv -t "$session" @claude_origin 2>/dev/null)
+origin=$(tmux show-options -qv -t "$session" @agents_origin 2>/dev/null)
+[ -n "$origin" ] ||
+  origin=$(tmux show-options -qv -t "$session" @claude_origin 2>/dev/null)
 [ -n "$origin" ] && [ -n "$parent" ] &&
   tmux switch-client -c "$parent" -t "$origin" 2>/dev/null
 

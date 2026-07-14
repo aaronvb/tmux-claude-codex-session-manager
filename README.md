@@ -54,7 +54,7 @@ set -g @plugin 'aaronvb/tmux-claude-codex-session-manager'
 Then hit `prefix` + <kbd>I</kbd> to install.
 
 > **Keybinding note:** by default the plugin binds `prefix` + `y` (launch
-> Claude), `prefix` + `o` (launch Codex), and `prefix` + `u` (list). If your
+> Claude), `prefix` + `o` (launch Codex), and `prefix` + `u` (picker). If your
 > config binds those elsewhere, either change the options below, or make sure
 > the plugin loads **after** your own bindings (put
 > `run '~/.tmux/plugins/tpm/tpm'` _after_ them) so the one you want wins.
@@ -68,7 +68,7 @@ git clone https://github.com/aaronvb/tmux-claude-codex-session-manager ~/clone/p
 Add to `~/.tmux.conf`, then reload (`prefix` + <kbd>r</kbd> or `tmux source ~/.tmux.conf`):
 
 ```tmux
-run-shell ~/clone/path/claude_session_manager.tmux
+run-shell ~/clone/path/agents_session_manager.tmux
 ```
 
 ## Codex setup
@@ -157,14 +157,15 @@ separately, as does a Claude or Codex you started by hand in an ordinary pane.
 Set any of these before the plugin loads (defaults shown):
 
 ```tmux
+set -g @agents_picker_key      'u'        # prefix key: open the picker
+set -g @agents_popup_width     '90%'      # shared popup width
+set -g @agents_popup_height    '90%'      # shared popup height
+set -g @agents_fzf_options     ''         # extra options passed to the shared fzf picker
+
 set -g @claude_launch_key     'y'        # prefix key: launch Claude for current dir
-set -g @claude_list_key       'u'        # prefix key: open the picker
 set -g @claude_command        'claude'   # command run in new Claude sessions
 set -g @claude_args           ''         # extra args appended to the command
 set -g @claude_session_prefix 'claude-'  # tmux session name prefix
-set -g @claude_popup_width     '90%'     # popup width (shared by both providers)
-set -g @claude_popup_height    '90%'     # popup height (shared by both providers)
-set -g @claude_fzf_options    ''         # extra options passed to the fzf picker
 
 set -g @codex_launch_key      'o'        # prefix key: launch Codex for current dir
 set -g @codex_command         'codex'    # command run in new Codex sessions
@@ -175,6 +176,15 @@ set -g @codex_state_dir       ''         # where the hook writes state files
 set -g @codex_enabled         'auto'     # 'auto': participate when codex is installed
                                          # 'off':  skip the provider and its launch key
 ```
+
+> **Migrating from the `@claude_*` plugin-wide names:** the legacy
+> `@claude_list_key`, `@claude_popup_width`, `@claude_popup_height`, and
+> `@claude_fzf_options` options remain silent fallbacks. When both names have a
+> non-empty value, the new `@agents_*` name wins; an empty new value falls back
+> to the legacy value. `$CLAUDE_PICKER` also remains a working alias of
+> `$AGENTS_PICKER`. Manual installs must update their `run-shell` path from
+> `claude_session_manager.tmux` to `agents_session_manager.tmux`; tpm installs
+> need no action.
 
 For example, to skip permission prompts in launched Claude sessions:
 
@@ -190,17 +200,17 @@ set -g @claude_args '--dangerously-skip-permissions'
 
 ### Customizing the fzf picker
 
-`@claude_fzf_options` is passed straight to `fzf`, so you can add your own bindings.
+`@agents_fzf_options` is passed straight to `fzf`, so you can add your own bindings.
 
 Here is a vim keybinding example:
 
 ```tmux
-set -g @claude_fzf_options "\
+set -g @agents_fzf_options "\
   --prompt 'nav> ' \
   --bind 'j:down' \
   --bind 'k:up' \
   --bind 'q:abort' \
-  --bind 'x:execute-silent(kill {3})+reload(sleep 0.3; \$CLAUDE_PICKER --list)' \
+  --bind 'x:execute-silent(kill {3})+reload(sleep 0.3; \$AGENTS_PICKER --list)' \
   --bind 'i:unbind(j,k,q,i,a,x)+change-prompt(filter> )' \
   --bind 'a:unbind(j,k,q,i,a,x)+change-prompt(filter> )' \
   --bind 'esc:rebind(j,k,q,i,a,x)+change-prompt(nav> )'"
@@ -218,10 +228,10 @@ The picker opens in **nav** mode:
 | `esc`     | filter mode → back to nav                               |
 
 Only the bound keys are special in nav mode; any other key still filters as you
-type. `x` reloads the list through `$CLAUDE_PICKER`, a path the picker exports for
-exactly this — write it as `\$CLAUDE_PICKER` inside the double-quoted value above
+type. `x` reloads the list through `$AGENTS_PICKER`, a path the picker exports for
+exactly this — write it as `\$AGENTS_PICKER` inside the double-quoted value above
 so tmux stores a literal `$` (in a single-quoted value, use a bare
-`$CLAUDE_PICKER`).
+`$AGENTS_PICKER`).
 
 ## How it works
 
@@ -231,7 +241,7 @@ so tmux stores a literal `$` (in a single-quoted value, use a bare
   panes, ranks them, and formats the picker rows.
 - The **launcher** creates a detached `claude-<hash-of-dir>` (or
   `codex-<hash-of-dir>`) tmux session running the provider's command, records
-  the window it came from in `@claude_origin`, and attaches to it in a popup.
+  the window it came from in `@agents_origin`, and attaches to it in a popup.
   It refuses with a message when the command isn't installed.
 - **Claude status** comes from `claude agents --json`: each Claude session
   self-reports its state (`busy` / `waiting` / `idle`) to a supervisor daemon,

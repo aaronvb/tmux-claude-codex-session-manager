@@ -30,8 +30,8 @@ prefix="$(get_tmux_option "@${provider}_session_prefix" "$def_prefix")"
 cmd="$(get_tmux_option "@${provider}_command" "$def_cmd")"
 args="$(get_tmux_option "@${provider}_args" '')"
 [ -n "$args" ] && cmd="$cmd $args"
-w="$(get_tmux_option @claude_popup_width '90%')"
-h="$(get_tmux_option @claude_popup_height '90%')"
+w="$(get_tmux_option_compat @agents_popup_width @claude_popup_width '90%')"
+h="$(get_tmux_option_compat @agents_popup_height @claude_popup_height '90%')"
 
 # Refuse before creating anything: a popup attached to an instantly-dead
 # session is just a flicker with no explanation.
@@ -59,7 +59,6 @@ tmux has-session -t "$session" 2>/dev/null ||
   tmux new-session -d -s "$session" -c "$path" "$cmd"
 
 # Record which window launched it, so the picker can jump back here later.
-# Kept as @claude_origin for every provider — the picker reads one name.
-[ -n "$window" ] && tmux set-option -t "$session" @claude_origin "$window"
+[ -n "$window" ] && tmux set-option -t "$session" @agents_origin "$window"
 
 tmux display-popup -w "$w" -h "$h" -E "tmux attach-session -t $session"

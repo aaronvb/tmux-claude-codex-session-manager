@@ -13,6 +13,25 @@ get_tmux_option() {
   fi
 }
 
+# get_tmux_option_compat <new-option-name> <legacy-option-name> <default>
+# The new-name argument maps an @agents_* option to the legacy @claude_* name
+# passed by each caller, so existing configurations continue to work unchanged.
+get_tmux_option_compat() {
+  local value
+  value="$(tmux show-option -gqv "$1" 2>/dev/null)"
+  if [ -n "$value" ]; then
+    printf '%s' "$value"
+    return
+  fi
+
+  value="$(tmux show-option -gqv "$2" 2>/dev/null)"
+  if [ -n "$value" ]; then
+    printf '%s' "$value"
+  else
+    printf '%s' "$3"
+  fi
+}
+
 # session_hash <string>
 # Short, stable, portable 8-char hash for deriving a session name from a path.
 # Prefers md5sum (Linux), falls back to md5 (macOS) then shasum. The trailing
