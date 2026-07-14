@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Shared helpers for tmux-claude-session-manager.
+# Shared helpers for tmux-claude-codex-session-manager.
 
 # get_tmux_option <option-name> <default>
 # Echoes the global tmux option value, or the default when unset/empty.
@@ -35,6 +35,35 @@ session_hash() {
 # then BSD (macOS); each rejects the other's flag, so the fallback is unambiguous.
 file_mtime() {
   stat -c %Y "$1" 2>/dev/null || stat -f %m "$1" 2>/dev/null
+}
+
+# codex_state_dir
+# Directory where the Codex hook writes one state file per session. Overridable
+# via @codex_state_dir. get_tmux_option already swallows a missing/unreachable
+# tmux and echoes the default, so the hook can resolve this with no server up.
+codex_state_dir() {
+  get_tmux_option @codex_state_dir \
+    "${XDG_STATE_HOME:-$HOME/.local/state}/tmux-claude-codex-session-manager/codex"
+}
+
+# codex_state_load <file>
+# Parses a state file's key=value lines into cs_* variables (cs_status, cs_cwd,
+# cs_transcript_path, cs_tmux_pane, cs_turn_id, cs_updated_at). Keys are
+# whitelisted rather than eval'd, so a corrupt file can set nothing else.
+# Returns non-zero when the file is unreadable.
+codex_state_load() {
+  # shellcheck disable=SC2034  # consumed by the sourcing script, not here
+  cs_status='' cs_cwd='' cs_transcript_path='' cs_tmux_pane='' cs_turn_id='' cs_updated_at=''
+  [ -r "$1" ] || return 1
+  local line key
+  while IFS= read -r line || [ -n "$line" ]; do
+    key="${line%%=*}"
+    case "$key" in
+    status | cwd | transcript_path | tmux_pane | turn_id | updated_at)
+      printf -v "cs_$key" '%s' "${line#*=}"
+      ;;
+    esac
+  done <"$1"
 }
 
 # claude_transcript_mtime <session-id>
