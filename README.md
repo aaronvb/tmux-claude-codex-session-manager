@@ -1,5 +1,9 @@
 # tmux-claude-codex-session-manager
 
+*Built on [craftzdog's tmux-claude-session-manager](https://github.com/craftzdog/tmux-claude-session-manager),
+a manager for Claude Code sessions. This fork makes it **multi-provider** — Codex runs as a co-equal
+agent alongside Claude in one ranked picker — while Claude-only setups work exactly as before.*
+
 [![screenshot](./docs/example.png)](./docs/example.png)
 
 Run many [Claude Code](https://claude.com/claude-code) and
