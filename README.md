@@ -1,6 +1,6 @@
 # tmux-claude-codex-session-manager
 
-[![screenshot](./docs/screenshot.jpg)](https://youtu.be/NnTV6r4l5D0)
+[![screenshot](./docs/example.jpg)](./docs/example.jpg)
 
 Run many [Claude Code](https://claude.com/claude-code) and
 [Codex](https://developers.openai.com/codex) sessions across your projects,
