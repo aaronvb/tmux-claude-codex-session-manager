@@ -112,9 +112,11 @@ this for any new or changed hook; until trusted, the hooks simply don't run.
 > Trust is recorded against the `hooks.json` entries, so plugin updates that
 > change the script's internals do **not** re-trigger the prompt — only editing
 > the entries themselves does. Two quirks to know: hooks trusted during a
-> session's startup review start firing from the *next* codex session, and at
-> session start hook events queue behind MCP server startup, so a brand-new
-> session can take a few seconds to appear in the picker.
+> session's startup review start firing from the *next* codex session, and hooks
+> report status from a session's first prompt/turn onward, not when its TUI
+> starts. Until that first prompt, a dedicated session appears in the picker
+> with a grey `?`. Hook delivery can additionally queue behind MCP server
+> startup; a slow or failing server can delay it by that server's full timeout.
 
 That's it. Codex sessions started anywhere (the hook is global) now report
 `working` / `waiting` / `idle` to the picker. Sessions running outside tmux are
@@ -128,6 +130,10 @@ state files are inert and swept automatically.
 for your answer. A conversational question that ends the turn reads as the turn
 stopping, i.e. `idle`. (Claude self-reports `waiting` for any kind of "needs
 your input".)
+
+A grey `?` means a dedicated Codex session is running but has not reported a
+status yet — either it has not received its first prompt or the hooks are not
+installed. Its status becomes live once a hook event is delivered.
 
 ## Usage
 
@@ -251,11 +257,12 @@ so tmux stores a literal `$` (in a single-quoted value, use a bare
 - **Codex status** comes from `scripts/codex-hook.sh`, which Codex runs on each
   lifecycle event: prompt submitted / tool running → `busy`, permission
   requested → `waiting`, turn ended → `idle`. Each event atomically rewrites a
-  per-session state file, which the Codex adapter reads. Since Codex has no
-  session-end hook, state files are treated as *claims*: a row is kept only
-  when a live `codex` process still runs on the recorded pane, dead claims are
-  swept, and when several claims record the same pane (quit codex, restart it
-  in the same pane), only the newest survives.
+  per-session state file, which the Codex adapter reads. Dedicated sessions
+  with a live `codex` process but no state file are still listed with `?`.
+  Since Codex has no session-end hook, state files are treated as *claims*: a
+  row is kept only when a live `codex` process still runs on the recorded pane,
+  dead claims are swept, and when several claims record the same pane (quit
+  codex, restart it in the same pane), only the newest survives.
 - The **render pipeline** pairs each agent with the tmux pane it occupies by
   joining `pid` → `tty` → pane (Claude reports a pid) or pane → `tty` → `pid`
   (Codex's hook records a pane). That join is why identity is the agent
