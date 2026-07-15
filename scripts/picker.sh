@@ -5,7 +5,7 @@
 #   picker.sh --list    print the rows only (used by fzf's ctrl-x reload).
 #
 # Rows come from agents.sh, which pairs each running agent with the tmux pane it
-# occupies and tags it with its provider ([cc] Claude, [cx] Codex). Two kinds of
+# occupies and tags it with its provider (claude or codex). Two kinds of
 # row jump differently:
 #   dedicated  an agent in a session this plugin launched (claude-*/codex-*) —
 #              resumed in the popup, over the window it was launched from.

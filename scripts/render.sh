@@ -6,7 +6,8 @@
 #
 # Output fields are pinned so the picker's indexes cannot drift: 1-4 are hidden
 # plumbing (sort rank, jump pane, kill pid, jump kind), 5-9 are displayed
-# (provider tag [cc]/[cx], status icon, age, location, path). fzf keeps using
+# (provider tag claude/codex, padded and colored, status icon, age, location,
+# path). fzf keeps using
 # {2} for the preview pane, {3} for the kill pid, --with-nth=5,6,7,8,9.
 #
 # The locator is polymorphic — a pid (Claude) or a pane id (Codex), whichever
@@ -100,7 +101,9 @@ codex_base="${codex_cmd%% *}" codex_base="${codex_base##*/}"
     age = (seen_at[id] != "") ? int((now - seen_at[id]) / 60) "m" : "-"
     prefix = (provider == "claude") ? prefix_claude : prefix_codex
     kind = (index(sess[tty], prefix) == 1) ? "dedicated" : "loose"
-    tag = (provider == "claude") ? "[cc]" : "[cx]"
+    tag = sprintf("%-7s", provider)
+    if      (provider == "claude") tag = "\033[38;5;208m" tag "\033[0m"
+    else if (provider == "codex")  tag = "\033[36m" tag "\033[0m"
 
     if (index(path, home) == 1) path = "~" substr(path, length(home) + 1)
 

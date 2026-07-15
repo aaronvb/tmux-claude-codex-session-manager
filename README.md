@@ -12,7 +12,7 @@ end up with a dozen of them and no way to tell which are finished without openin
 each one. This plugin gives you:
 
 - 🔢 **A central picker** (`prefix` + `u`) listing every running Claude *and*
-  Codex agent in one ranked list, tagged `[cc]` / `[cx]` — several in one
+  Codex agent in one ranked list, tagged `claude` / `codex` — several in one
   project, and any running loose in an ordinary pane.
 - 🟢 **Live status** per agent — `working` / `waiting` / `idle` — so you
   instantly see which need you.
