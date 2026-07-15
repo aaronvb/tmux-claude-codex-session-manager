@@ -5,9 +5,10 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=helpers.sh
 . "$DIR/helpers.sh"
 
-prefix="$(get_tmux_option @claude_session_prefix 'claude-')"
-w="$(get_tmux_option @claude_popup_width '90%')"
-h="$(get_tmux_option @claude_popup_height '90%')"
+claude_prefix="$(get_tmux_option @claude_session_prefix 'claude-')"
+codex_prefix="$(get_tmux_option @codex_session_prefix 'codex-')"
+w="$(get_tmux_option_compat @agents_popup_width @claude_popup_width '90%')"
+h="$(get_tmux_option_compat @agents_popup_height @claude_popup_height '90%')"
 
 # The client that pressed the key, and the session it is currently attached to.
 # Looked up by exact client_name match rather than "first client anywhere that
@@ -19,20 +20,20 @@ my_session="$(tmux list-clients -F '#{client_name} #{session_name}' 2>/dev/null 
   awk -v me="$me" '$1 == me { print $2; exit }')"
 
 case "$my_session" in
-"$prefix"*)
-  # We are inside a session popup: close it, then reopen the picker on the
-  # outer client that originally opened it.
+"$claude_prefix"* | "$codex_prefix"*)
+  # We are inside a session popup (any provider's): close it, then reopen the
+  # picker on the outer client that originally opened it.
   tmux detach-client -s "$my_session"
   for _ in $(seq 1 100); do
     tmux list-clients -F '#{session_name}' 2>/dev/null | grep -qx "$my_session" || break
     sleep 0.05
   done
-  host="$(tmux show-options -gqv @claude_parent 2>/dev/null)"
+  host="$(get_tmux_option_compat @agents_parent @claude_parent '')"
   ;;
 *)
   # Normal case: this client is already the host.
   host="$me"
-  tmux set-option -g @claude_parent "$host"
+  tmux set-option -g @agents_parent "$host"
   ;;
 esac
 
